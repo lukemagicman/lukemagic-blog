@@ -3,6 +3,11 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
 <!doctype html>
@@ -27,7 +32,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 				<div class="actions">
 					<a class="primary" href="/blog/">阅读文章</a>
-					<a class="secondary" href="#projects">看看我在折腾什么</a>
+					<a class="secondary" href="#exploring">看看我在折腾什么</a>
 				</div>
 			</section>
 
@@ -37,12 +42,38 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 					<a href="/blog/">全部文章 →</a>
 				</div>
 
-				<div class="empty-card">
-					<p>新的文章会陆续出现在这里。</p>
+				<div class="latest-list">
+					{
+						posts.length > 0 ? (
+							posts.map((post) => (
+								<a class="latest-card" href={`/blog/${post.id}/`}>
+									<div class="latest-meta">
+										<time>
+											{post.data.pubDate.toLocaleDateString('zh-CN', {
+												year: 'numeric',
+												month: 'long',
+												day: 'numeric',
+											})}
+										</time>
+									</div>
+
+									<h3>{post.data.title}</h3>
+
+									<p>{post.data.description}</p>
+
+									<span class="read-more">阅读全文 →</span>
+								</a>
+							))
+						) : (
+							<div class="empty-card">
+								<p>新的文章会陆续出现在这里。</p>
+							</div>
+						)
+					}
 				</div>
 			</section>
 
-			<section class="section" id="projects">
+			<section class="section" id="exploring">
 				<div class="section-title">
 					<h2>Exploring</h2>
 				</div>
@@ -167,6 +198,52 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 		font-size: 0.95rem;
 	}
 
+	.latest-list {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.latest-card {
+		display: block;
+		padding: 2rem 0;
+		border-top: 1px solid #e5e7eb;
+		color: inherit;
+		text-decoration: none;
+		transition: transform 0.2s ease;
+	}
+
+	.latest-card:last-child {
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.latest-card:hover {
+		transform: translateX(6px);
+	}
+
+	.latest-meta {
+		margin-bottom: 0.75rem;
+		font-size: 0.82rem;
+		color: #777;
+	}
+
+	.latest-card h3 {
+		margin: 0;
+		font-size: 1.55rem;
+		letter-spacing: -0.02em;
+	}
+
+	.latest-card p {
+		max-width: 700px;
+		margin: 0.7rem 0 1rem;
+		line-height: 1.7;
+		color: #555;
+	}
+
+	.read-more {
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+
 	.empty-card {
 		border: 1px solid #e5e7eb;
 		border-radius: 16px;
@@ -176,7 +253,6 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 	.empty-card p {
 		margin: 0;
 		color: #555;
-		line-height: 1.7;
 	}
 
 	.project-grid {
