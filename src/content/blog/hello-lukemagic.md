@@ -2,6 +2,11 @@
 title: '你好，这里是 LukeMagic'
 description: '关于这个博客，以及我为什么想把一些折腾、思考和记录长期留在这里。'
 pubDate: 2026-09-06
+category: 随笔
+tags:
+  - LukeMagic
+  - 博客
+  - 记录
 ---
 
 欢迎来到 **LukeMagic**。

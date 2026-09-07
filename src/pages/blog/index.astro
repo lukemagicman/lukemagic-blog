@@ -8,6 +8,8 @@ import { getCollection } from 'astro:content';
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+
+const categories = ['技术折腾', 'AI', '互联网', '教程', '随笔'];
 ---
 
 <!doctype html>
@@ -22,141 +24,353 @@ const posts = (await getCollection('blog')).sort(
 	<body>
 		<Header />
 
-		<main>
-			<section class="blog-header">
+		<main class="blog-page">
+			<section class="blog-hero">
 				<p class="eyebrow">WRITING</p>
 				<h1>Blog</h1>
-				<p>
-					技术折腾、AI 工具、互联网探索，以及一些偶尔冒出来的想法。
+
+				<p class="intro">
+					技术折腾、AI 工具、互联网探索，
+					以及一些偶尔冒出来的想法。
 				</p>
 			</section>
 
-			<section class="posts">
-				{
-					posts.length > 0 ? (
-						posts.map((post) => (
-							<a class="post-card" href={`/blog/${post.id}/`}>
-								<div class="post-meta">
-									<time>
-										{post.data.pubDate.toLocaleDateString('zh-CN', {
-											year: 'numeric',
-											month: 'long',
-											day: 'numeric',
-										})}
-									</time>
-								</div>
+			<section class="filter-area">
+				<div class="filters">
+					<button
+						class="filter active"
+						data-filter="all"
+						type="button"
+					>
+						全部
+					</button>
 
-								<h2>{post.data.title}</h2>
-
-								<p>{post.data.description}</p>
-
-								<span class="read-more">阅读全文 →</span>
-							</a>
+					{
+						categories.map((category) => (
+							<button
+								class="filter"
+								data-filter={category}
+								type="button"
+							>
+								{category}
+							</button>
 						))
-					) : (
-						<div class="empty">
-							<p>这里还没有文章。</p>
-						</div>
-					)
+					}
+				</div>
+			</section>
+
+			<section class="post-list">
+				{
+					posts.map((post) => {
+						const category = post.data.category ?? '未分类';
+						const tags = post.data.tags ?? [];
+
+						return (
+							<article
+								class="post-item"
+								data-post
+								data-post-category={category}
+							>
+								<a
+									class="post-link"
+									href={`/blog/${post.id}/`}
+								>
+									<div class="post-meta">
+										<span class="category">
+											{category}
+										</span>
+
+										<span class="dot">·</span>
+
+										<time>
+											{post.data.pubDate.toLocaleDateString(
+												'zh-CN',
+												{
+													year: 'numeric',
+													month: 'long',
+													day: 'numeric',
+												}
+											)}
+										</time>
+									</div>
+
+									<h2>{post.data.title}</h2>
+
+									<p class="post-description">
+										{post.data.description}
+									</p>
+
+									<div class="post-bottom">
+										{
+											tags.length > 0 && (
+												<div class="tags">
+													{tags.map((tag) => (
+														<span class="tag">
+															#{tag}
+														</span>
+													))}
+												</div>
+											)
+										}
+
+										<span class="arrow">→</span>
+									</div>
+								</a>
+							</article>
+						);
+					})
 				}
+
+				<div class="empty-state" data-empty hidden>
+					<p>这个分类暂时还没有文章。</p>
+				</div>
 			</section>
 		</main>
 
 		<Footer />
+
+		<script>
+			const filters = document.querySelectorAll('[data-filter]');
+			const posts = document.querySelectorAll('[data-post]');
+			const emptyState = document.querySelector('[data-empty]');
+
+			filters.forEach((filter) => {
+				if (!(filter instanceof HTMLButtonElement)) return;
+
+				filter.addEventListener('click', () => {
+					const selected = filter.dataset.filter;
+
+					filters.forEach((item) => {
+						item.classList.remove('active');
+					});
+
+					filter.classList.add('active');
+
+					let visible = 0;
+
+					posts.forEach((post) => {
+						if (!(post instanceof HTMLElement)) return;
+
+						const show =
+							selected === 'all' ||
+							post.dataset.postCategory === selected;
+
+						post.hidden = !show;
+
+						if (show) visible++;
+					});
+
+					if (emptyState instanceof HTMLElement) {
+						emptyState.hidden = visible > 0;
+					}
+				});
+			});
+		</script>
 	</body>
 </html>
 
-<style>
-	main {
-		max-width: 900px;
+<style is:global>
+	.blog-page {
+		max-width: 920px;
 		margin: 0 auto;
 		padding: 5rem 1.5rem 7rem;
 	}
 
-	.blog-header {
-		padding-bottom: 4rem;
+	.blog-hero {
+		padding-bottom: 4.5rem;
 	}
 
-	.eyebrow {
-		margin: 0 0 1rem;
-		font-size: 0.8rem;
+	.blog-page .eyebrow {
+		margin: 0 0 1.1rem;
+		font-size: 0.78rem;
 		font-weight: 700;
-		letter-spacing: 0.16em;
-		color: #666;
+		letter-spacing: 0.18em;
+		color: #6b7280;
 	}
 
-	.blog-header h1 {
+	.blog-hero h1 {
 		margin: 0;
-		font-size: clamp(3.5rem, 8vw, 6rem);
-		line-height: 1;
-		letter-spacing: -0.05em;
+		font-size: clamp(4rem, 9vw, 7rem);
+		line-height: 0.9;
+		letter-spacing: -0.06em;
 	}
 
-	.blog-header > p:last-child {
-		max-width: 650px;
-		margin: 1.5rem 0 0;
-		font-size: 1.15rem;
-		line-height: 1.8;
-		color: #555;
+	.blog-page .intro {
+		max-width: 660px;
+		margin: 2rem 0 0;
+		font-size: 1.18rem;
+		line-height: 1.85;
+		color: #4b5563;
 	}
 
-	.posts {
+	.filter-area {
+		padding-bottom: 2rem;
+	}
+
+	.filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.65rem;
+	}
+
+	.filter {
+		appearance: none;
+		padding: 0.55rem 1rem;
+		border: 1px solid #e5e7eb;
+		border-radius: 999px;
+		background: #fff;
+		color: #4b5563;
+		font-family: inherit;
+		font-size: 0.88rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			background 0.18s ease,
+			color 0.18s ease,
+			border-color 0.18s ease,
+			transform 0.18s ease;
+	}
+
+	.filter:hover {
+		border-color: #9ca3af;
+		color: #111827;
+		transform: translateY(-1px);
+	}
+
+	.filter.active {
+		border-color: #111827;
+		background: #111827;
+		color: #fff;
+	}
+
+	.post-list {
 		border-top: 1px solid #e5e7eb;
 	}
 
-	.post-card {
-		display: block;
-		padding: 2.5rem 0;
+	.post-item {
 		border-bottom: 1px solid #e5e7eb;
-		color: inherit;
-		text-decoration: none;
-		transition: transform 0.2s ease;
 	}
 
-	.post-card:hover {
-		transform: translateX(6px);
+	.post-item[hidden] {
+		display: none;
+	}
+
+	.post-link {
+		display: block;
+		padding: 2.6rem 0;
+		color: #111827;
+		text-decoration: none;
+	}
+
+	.post-link:hover h2 {
+		opacity: 0.65;
+	}
+
+	.post-link:hover .arrow {
+		transform: translateX(5px);
 	}
 
 	.post-meta {
-		margin-bottom: 0.8rem;
-		font-size: 0.85rem;
-		color: #777;
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		margin-bottom: 0.9rem;
+		font-size: 0.82rem;
 	}
 
-	.post-card h2 {
+	.category {
+		font-weight: 650;
+		color: #111827;
+	}
+
+	.dot,
+	.post-meta time {
+		color: #9ca3af;
+	}
+
+	.post-item h2 {
 		margin: 0;
-		font-size: 1.8rem;
-		letter-spacing: -0.02em;
+		font-size: clamp(1.65rem, 4vw, 2.2rem);
+		line-height: 1.25;
+		letter-spacing: -0.035em;
+		color: #111827;
+		transition: opacity 0.18s ease;
 	}
 
-	.post-card p {
-		max-width: 700px;
-		margin: 0.8rem 0 1.2rem;
-		line-height: 1.7;
-		color: #555;
+	.post-description {
+		max-width: 710px;
+		margin: 1rem 0 1.35rem;
+		font-size: 1rem;
+		line-height: 1.8;
+		color: #6b7280;
 	}
 
-	.read-more {
-		font-size: 0.9rem;
-		font-weight: 600;
+	.post-bottom {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
 	}
 
-	.empty {
-		padding: 4rem 0;
-		color: #666;
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+
+	.tag {
+		padding: 0.3rem 0.6rem;
+		border-radius: 999px;
+		background: #f3f4f6;
+		color: #6b7280;
+		font-size: 0.76rem;
+		font-weight: 500;
+	}
+
+	.arrow {
+		flex-shrink: 0;
+		font-size: 1.35rem;
+		color: #9ca3af;
+		transition: transform 0.18s ease;
+	}
+
+	.empty-state {
+		padding: 5rem 0;
+		text-align: center;
+		color: #9ca3af;
+	}
+
+	.empty-state[hidden] {
+		display: none;
 	}
 
 	@media (max-width: 720px) {
-		main {
-			padding: 3rem 1.25rem 5rem;
+		.blog-page {
+			padding: 3.5rem 1.25rem 5rem;
 		}
 
-		.blog-header {
-			padding-bottom: 3rem;
+		.blog-hero {
+			padding-bottom: 3.5rem;
 		}
 
-		.post-card h2 {
-			font-size: 1.5rem;
+		.blog-hero h1 {
+			font-size: clamp(4rem, 20vw, 5.5rem);
+		}
+
+		.blog-page .intro {
+			font-size: 1.05rem;
+		}
+
+		.post-link {
+			padding: 2rem 0;
+		}
+
+		.post-meta {
+			flex-wrap: wrap;
+		}
+
+		.post-description {
+			font-size: 0.95rem;
 		}
 	}
 </style>
